@@ -1,3 +1,8 @@
+<?php
+// ob_start();
+session_start();
+include "../SQL/connect.php";
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -137,13 +142,13 @@
             <p>Let's get started! Please create an account.</p>
             <form action="" method="post">
                 <div class="labels med">
-                    <label for="prenom">
+                    <label for="fname">
                         <h4>First Name</h4>
-                        <input type="text" name="prenom" id="prenom" required placeholder="Enter First Name">
+                        <input type="text" name="fname" id="fname" required placeholder="Enter First Name">
                     </label>
-                    <label for="nom">
+                    <label for="lname">
                         <h4>Last Name</h4>
-                        <input type="text" name="nom" id="nom" required placeholder="Enter Last Name">
+                        <input type="text" name="lname" id="lname" required placeholder="Enter Last Name">
                     </label>
                 </div>
                 <label for="email">
@@ -173,5 +178,39 @@
         </div>
     </div>
 </body>
+<?php
+// function Redirect($url, $permanent = false)
+// {
+//     header('Location:'. $url, true, $permanent ? 301 : 302);
+//     exit();
+// }
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $fname = $_POST['fname'];
+    $lname = $_POST['lname'];
+    $email = $_POST['email'];
+    $service = $_POST['service'];
+    $tel = $_POST['tel'];
+    $password = base64_encode($_POST['password']);
+
+    $query = "INSERT INTO users (fname, lname, email, service, tel, password) VALUES (:fname, :lname, :email, :service, :tel, :password)";
+    $stmt = $conn->prepare($query);
+
+    $stmt->bindParam(':fname', $fname);
+    $stmt->bindParam(':lname', $lname);
+    $stmt->bindParam(':email', $email);
+    $stmt->bindParam(':service', $service);
+    $stmt->bindParam(':tel', $tel);
+    $stmt->bindParam(':password', $password);
+
+    if ($stmt->execute()) {
+        header("Location: dashboard.php");
+        $_SESSION['email'] = $email;
+    } else {
+        echo "Error during signup.";
+    }
+}
+?>
 
 </html>

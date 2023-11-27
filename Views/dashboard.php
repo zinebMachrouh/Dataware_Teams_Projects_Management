@@ -1,3 +1,7 @@
+<?php
+    session_start();
+    include "../SQL/connect.php"
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -92,6 +96,16 @@
         <h2>Data<img src=../public/brand.png alt=brand />are</h2>
         <nav>
             <a href="#"><i class="fa-solid fa-house"></i> Home</a>
+            <?php 
+                $email = $_SESSION['email'];
+                $query = "SELECT * FROM users where email = $email";
+                $stmt = $conn->prepare($query);
+                $stmt->execute();
+                $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($result as $row) {
+                    echo "ID: " . $row['id'] . ", Name: " . $row['name'] . "<br>";
+                }
+            ?>
             <a href="#"><i class="fa-solid fa-plus"></i> Add</a>
             <a href="#"><i class="fa-solid fa-user"></i> Profile</a>
             <a href="#"><i class="fa-solid fa-arrow-right-from-bracket"></i> LogOut</a>
@@ -99,11 +113,11 @@
     </header>
     <main>
         <h2>First Last Name's Teams</h2>
-        <table class="table">
-            <thead>
-                th*
-            </thead>
-        </table>
+        <div class="cards">
+            <?php
+                
+            ?>
+        </div>
     </main>
 </body>
 
