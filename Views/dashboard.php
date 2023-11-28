@@ -1,4 +1,5 @@
 <?php
+ob_start();
 session_start();
 include "../SQL/connect.php";
 ?>
@@ -10,7 +11,6 @@ include "../SQL/connect.php";
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link rel="shortcut icon" href="../public/brand.png" type="image/x-icon">
-    <!-- <link rel="stylesheet" href="../public/style.css"> -->
     <script src="https://kit.fontawesome.com/6e1faf1eda.js" crossorigin="anonymous"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
@@ -248,13 +248,30 @@ include "../SQL/connect.php";
             flex-direction: column;
         }
 
+        .popup-body form input,
+        .popup-body form select {
+            width: 100%;
+            padding: 10px 7px;
+            font-size: 16px;
+            border-radius: 5px;
+            outline: none;
+            border: #1e1e1e4c 1px solid;
+            margin-bottom: 15px;
+        }
+
+        .popup-body form label {
+            color: #008fd4;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
         .popup-footer {
             text-align: right;
-            padding: 15px 0px;
+            padding: 10px 0px;
             background: #f8f9fa;
         }
 
-        .popup-footer button{
+        .popup-footer button {
             background-color: #008fd4;
             color: #fafafa;
             padding: 7px 10px;
@@ -262,7 +279,34 @@ include "../SQL/connect.php";
             outline: none;
             font-size: 16px;
             border-radius: 7px;
-            
+
+        }
+
+        .fullPage {
+            height: 79.8vh;
+            overflow: hidden;
+        }
+
+        .fullPage h4 {
+            color: #def3ff;
+
+        }
+
+        .side {
+            height: 100px;
+            width: 10px;
+            background-color: #008fd4;
+            border-radius: 15px;
+            margin-right: 10px;
+        }
+
+        .team {
+            padding: 10px;
+            display: flex;
+            background-color: #fafafa;
+            border-radius: 10px;
+            height: fit-content;
+            width: 300px;
         }
     </style>
 </head>
@@ -304,6 +348,8 @@ include "../SQL/connect.php";
     <main>
         <?php
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $userID = $_POST['userID'];
+            $newRole = $_POST['newRole'];
             $stmt = $conn->prepare("UPDATE users SET role = :newRole WHERE id = :userID");
             $stmt->bindParam(':newRole', $newRole);
             $stmt->bindParam(':userID', $userID);
@@ -336,19 +382,42 @@ include "../SQL/connect.php";
                                 </div>
                                 <div class=card-btm>
                                     <a href=#><i class='fa-solid fa-location-dot' style='margin-right:5px;'></i>" . $user['service'] . "</a>";
-                    echo ($user["role"] === 0) ? "<a onclick='openPopup(" . $user["id"] . ")'>Member <i class='fa-solid fa-pencil'></i></a>" : "";
+                    echo ($user['role'] === 0) ? "<a onclick='openPopup(" . $user["id"] . ")'>Member <i class='fa-solid fa-pencil'></i></a>" : (($user['role'] === 1) ? "<a onclick='openPopup(" . $user["id"] . ")'>Product Owner <i class='fa-solid fa-pencil'></i></a>" : (($user['role'] === 2) ? "<a onclick='openPopup(" . $user["id"] . ")'>Scrum Master <i class='fa-solid fa-pencil'></i></a>" : ""));
                     echo "</div>
                             </div>";
                 }
-
                 echo '</div>';
             } else if ($user['role'] === 1) {
-                echo '<a href="#"><i class="fa-solid fa-plus"></i>Create Project</a>';
+                echo '<h4 class=sub-title>All Users : </h4>';
             } else if ($user['role'] === 2) {
                 echo '<a href="#"><i class="fa-solid fa-plus"></i>Create Team</a>';
             } else {
                 if ($user['teamId'] === NULL) {
-                    echo '<h4>Nothing</h4>';
+                    echo '<div class=fullPage><h4>No Teams <br>No Projects</h4></div>';
+                } else {
+                    $query = "SELECT * FROM teams WHERE id = {$user['teamId']}";
+                    $stmt = $conn->prepare($query);
+                    $stmt->execute();
+                    $team = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                    $query1 = "SELECT * FROM projects WHERE id = {$team['projectId']}";
+                    $stmt1 = $conn->prepare($query1);
+                    $stmt1->execute();
+                    $project = $stmt1->fetch(PDO::FETCH_ASSOC);
+
+                    echo "<h4>Team</h4>";
+                    echo "
+                        <div class='team'>
+                            <div class='side'></div>
+                            <div class='card-main'>
+                                <h4>" . $team['name'] . "</h4>
+                                <p>" . $team['description'] . "</p>
+                                <p style='color: #8d99ae;'><i class='fa-regular fa-clock' style='margin-right:5px;'></i>" . $team['created-at'] ."</p>
+                                <h4>Project:</h4>
+                                <a href=#>".$project['name']."</a>
+                            </div>
+                        </div>
+                    ";
                 }
             }
             ?>
@@ -364,7 +433,11 @@ include "../SQL/connect.php";
                         <label for="userID">User ID:</label>
                         <input type="text" id="userID" name="userID" id="userId" required>
                         <label for="newRole">New Role:</label>
-                        <input type="text" id="newRole" name="newRole" id="newRole" required>
+                        <select name="newRole" id="newRole" required>
+                            <option value="0">Member</option>
+                            <option value="1">Product Owner</option>
+                            <option value="2">Scrum Master</option>
+                        </select>
                         <div class="popup-footer">
                             <button type="submit" class="btn btn-primary">Modify Role</button>
                         </div>
@@ -373,6 +446,7 @@ include "../SQL/connect.php";
             </div>
         </div>
     </main>
+
     <script>
         function openPopup(userID) {
             document.getElementById('userID').value = userID;
