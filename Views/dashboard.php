@@ -293,7 +293,7 @@ include "../SQL/connect.php";
         }
 
         .side {
-            height: 100px;
+            height: 160px;
             width: 10px;
             background-color: #008fd4;
             border-radius: 15px;
@@ -307,6 +307,17 @@ include "../SQL/connect.php";
             border-radius: 10px;
             height: fit-content;
             width: 300px;
+        }
+        .card-main h4{
+            margin-bottom: 15px;
+        }
+        .projectName {
+            background-color: #00a6e83f;
+            padding: 10px 15px;
+            font-weight: 600;
+            border-radius: 25px;
+            color: #308BE6;
+            text-decoration: none;
         }
     </style>
 </head>
@@ -366,7 +377,8 @@ include "../SQL/connect.php";
                 echo '<h4 class=sub-title>All Users : </h4>';
                 echo '<div class=cards>';
 
-                $query = "SELECT * FROM users where role != 3";
+                $query = "SELECT users.*, team_user.team_id AS teamId,teams.name AS team_name, teams.description AS team_description FROM users JOIN team_user ON users.id = team_user.user_id JOIN teams ON team_user.team_id = teams.id WHERE users.role != 3";
+
                 $stmt = $conn->prepare($query);
                 $stmt->execute();
                 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -395,29 +407,49 @@ include "../SQL/connect.php";
                 if ($user['teamId'] === NULL) {
                     echo '<div class=fullPage><h4>No Teams <br>No Projects</h4></div>';
                 } else {
-                    $query = "SELECT * FROM teams WHERE id = {$user['teamId']}";
-                    $stmt = $conn->prepare($query);
-                    $stmt->execute();
-                    $team = $stmt->fetch(PDO::FETCH_ASSOC);
+                    $userId = $user['id'];
 
-                    $query1 = "SELECT * FROM projects WHERE id = {$team['projectId']}";
-                    $stmt1 = $conn->prepare($query1);
-                    $stmt1->execute();
-                    $project = $stmt1->fetch(PDO::FETCH_ASSOC);
+                    $queryUserTeam = "SELECT team_id FROM team_user WHERE user_id = :userId";
+                    $stmtUserTeam = $conn->prepare($queryUserTeam);
+                    $stmtUserTeam->bindParam(':userId', $userId, PDO::PARAM_INT);
+                    $stmtUserTeam->execute();
+                    $userTeamId = $stmtUserTeam->fetchColumn();
 
-                    echo "<h4>Team</h4>";
-                    echo "
-                        <div class='team'>
-                            <div class='side'></div>
-                            <div class='card-main'>
-                                <h4>" . $team['name'] . "</h4>
-                                <p>" . $team['description'] . "</p>
-                                <p style='color: #8d99ae;'><i class='fa-regular fa-clock' style='margin-right:5px;'></i>" . $team['created-at'] ."</p>
-                                <h4>Project:</h4>
-                                <a href=#>".$project['name']."</a>
-                            </div>
-                        </div>
-                    ";
+                    if ($userTeamId) {
+                        $queryTeam = "SELECT * FROM teams WHERE id = :teamId";
+                        $stmtTeam = $conn->prepare($queryTeam);
+                        $stmtTeam->bindParam(':teamId', $userTeamId, PDO::PARAM_INT);
+                        $stmtTeam->execute();
+                        $team = $stmtTeam->fetch(PDO::FETCH_ASSOC);
+
+                        if ($team) {
+                            $teamProjectId = $team['project_id'];
+                            $queryProject = "SELECT * FROM projects WHERE id = :projectId";
+                            $stmtProject = $conn->prepare($queryProject);
+                            $stmtProject->bindParam(':projectId', $teamProjectId, PDO::PARAM_INT);
+                            $stmtProject->execute();
+                            $project = $stmtProject->fetch(PDO::FETCH_ASSOC);
+
+                            echo "<table border='1'>
+                                    <tr>
+                                        <th>Team Name</th>
+                                        <th>Description</th>
+                                        <th>Created At</th>
+                                        <th>Project Name</th>
+                                    </tr>
+                                    <tr>
+                                        <td>{$team['name']}</td>
+                                        <td>{$team['description']}</td>
+                                        <td>{$team['created_at']}</td>
+                                        <td><a href='#' class='projectName'>{$project['name']}</a></td>
+                                    </tr>
+                                </table>";
+                        } else {
+                            echo "<p>No team data found for the user.</p>";
+                        }
+                    } else {
+                        echo "<p>User is not associated with any team.</p>";
+                    }
                 }
             }
             ?>
