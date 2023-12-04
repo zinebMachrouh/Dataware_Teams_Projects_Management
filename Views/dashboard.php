@@ -92,13 +92,14 @@ include "../SQL/connect.php";
         .title {
             color: #fafafa;
             font-size: 28px;
-            margin-bottom: 25px;
         }
 
         .sub-title {
             color: #def3ff;
             font-size: 24px;
             margin-bottom: 15px;
+            margin-top: 25px;
+
         }
 
         .card {
@@ -222,7 +223,6 @@ include "../SQL/connect.php";
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
             overflow: hidden;
             width: 400px;
-
         }
 
         .close {
@@ -269,6 +269,10 @@ include "../SQL/connect.php";
             text-align: right;
             padding: 10px 0px;
             background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: flex-end;
         }
 
         .popup-footer button {
@@ -279,7 +283,30 @@ include "../SQL/connect.php";
             outline: none;
             font-size: 16px;
             border-radius: 7px;
+        }
 
+
+        .pro {
+            margin-top: 30px;
+        }
+
+        .popup-body p {
+            margin: 5px 0px;
+        }
+
+        .popup-footer a {
+            background-color: #008fd4;
+            color: #fafafa;
+            padding: 7px 10px;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            border-radius: 7px;
+            text-decoration: none;
+        }
+
+        .delete {
+            background-color: #E33535 !important;
         }
 
         .fullPage {
@@ -308,16 +335,87 @@ include "../SQL/connect.php";
             height: fit-content;
             width: 300px;
         }
-        .card-main h4{
+
+        .card-main h4 {
             margin-bottom: 15px;
         }
-        .projectName {
-            background-color: #00a6e83f;
-            padding: 10px 15px;
-            font-weight: 600;
-            border-radius: 25px;
-            color: #308BE6;
+
+        .teamTable {
+            background-color: #fafafa;
+            border: 2px solid #008fd4;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border-bottom: 2px solid #008fd4;
+            padding: 15px;
+            text-align: left;
+            width: 200px;
+            color: #1e1e1e;
+        }
+
+        th {
+            background-color: #def3ff;
+        }
+
+        td a {
             text-decoration: none;
+            margin-right: 20px;
+            transition: all ease-in-out .3s;
+        }
+
+        td a:nth-child(1) {
+            color: #008fd4;
+        }
+
+        td a:nth-child(2) {
+            color: #E33535;
+        }
+
+        td p {
+            padding: 7px 10px;
+            font-weight: 600;
+            width: 100px;
+            text-align: center;
+            border-radius: 25px;
+        }
+
+        .done {
+            background-color: #3ebf9d68;
+            color: #3ebf9d;
+        }
+
+        .active {
+            background-color: #00a6e83f;
+            color: #008fd4;
+
+        }
+
+        .add {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .add a {
+            padding: 10px 15px;
+            background: rgba(222, 243, 255, 0.31);
+            border-radius: 10px;
+            box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+            backdrop-filter: blur(9.2px);
+            color: #def3ff;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-decoration: none;
+            transition: all ease-in-out .3s;
+            -webkit-backdrop-filter: blur(9.2px);
+        }
+
+        .add a:hover {
+            transform: scale(1.1);
+            color: #fff;
         }
     </style>
 </head>
@@ -338,12 +436,10 @@ include "../SQL/connect.php";
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($user) {
-                if ($user['role'] === 0 || $user['role'] === 3) {
-                    echo '';
-                } else if ($user['role'] === 1) {
-                    echo '<a href="#"><i class="fa-solid fa-plus"></i>Create Project</a>';
-                } else if ($user['role'] === 2) {
-                    echo '<a href="#"><i class="fa-solid fa-plus"></i>Create Team</a>';
+                if ($user['role'] === 0) {
+                    echo '<a href="#myTeams"><i class="fa-solid fa-user-group"></i>Teams</a><a href="#myProjects"><i class="fa-solid fa-bars-progress"></i>Projects</a>';
+                } else if ($user['role'] === 3) {
+                    echo '<a href="./projects.php"><i class="fa-solid fa-bars-progress"></i>Projects</a>';
                 } else {
                     echo '';
                 }
@@ -352,10 +448,44 @@ include "../SQL/connect.php";
             }
 
             ?>
-            <a href="#"><i class="fa-solid fa-user"></i> Profile</a>
-            <a href="#"><i class="fa-solid fa-arrow-right-from-bracket"></i> LogOut</a>
+            <a href="#" onclick="openMyPopup()"><i class="fa-solid fa-user"></i> Profile</a>
+            <a href="./logout.php"><i class="fa-solid fa-arrow-right-from-bracket"></i> LogOut</a>
         </nav>
     </header>
+    <div id="myPopup" class="popup">
+        <div class="popup-content">
+            <div class="popup-header">
+                <?php
+                echo "
+                        <h2>{$user['fname']} {$user['lname']}</h2>";
+                ?>
+                <span class="close" onclick="closeMyPopup()">&times;</span>
+            </div>
+            <div class="popup-body">
+                <?php
+                echo "
+                    <h3>Personal information:</h3> <p>Birthdate : ";
+                echo ($user['birthdate'] === NULL) ? 'empty' : '' . $user['birthdate'] . '';
+                echo "</p><p>Phone Number : {$user['tel']}</p>
+                    <p>Adress : ";
+                echo ($user['adress'] === NULL) ? 'empty' : '' . $user['adress'] . '';
+                echo "
+                    </p><h3 class=pro>Professional information:</h3>
+                    <p>Email : {$user['email']}</p>
+                    <p>Service : {$user['service']}</p>
+                    <p>Role : 
+                ";
+                echo ($user['role'] === 0) ? "Member" : (($user['role'] === 1) ? "Product Owner" : (($user['role'] === 2) ? "Scrum Master" : "Admin"));
+                echo "</p>";
+                ?>
+                <div class="popup-footer">
+                    <a class="delete" href="./deleteUser.php?deleteOne=<?php echo $user['id']; ?>">Delete</a>
+                    <a href="./modify.php?modifyOne=<?php echo $user['id']; ?>">Modify</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <main>
         <?php
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -377,7 +507,7 @@ include "../SQL/connect.php";
                 echo '<h4 class=sub-title>All Users : </h4>';
                 echo '<div class=cards>';
 
-                $query = "SELECT users.*, team_user.team_id AS teamId,teams.name AS team_name, teams.description AS team_description FROM users JOIN team_user ON users.id = team_user.user_id JOIN teams ON team_user.team_id = teams.id WHERE users.role != 3";
+                $query = "SELECT * from users WHERE users.role != 3";
 
                 $stmt = $conn->prepare($query);
                 $stmt->execute();
@@ -400,56 +530,175 @@ include "../SQL/connect.php";
                 }
                 echo '</div>';
             } else if ($user['role'] === 1) {
-                echo '<h4 class=sub-title>All Users : </h4>';
+                echo '<div class="add">
+                    <h4 class=sub-title>All Projects : </h4>
+                    <a href="./addProject.php?productOwner=' . $user['id'] . '">+ New Project</a>
+                </div>';
+
+                $query = "SELECT * from projects WHERE productOwner = :id";
+                $stmt = $conn->prepare($query);
+                $stmt->bindParam(':id', $user['id'], PDO::PARAM_STR);
+                $stmt->execute();
+                $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                echo "<div class=fullPage><table class='teamTable'>
+                        <tr>
+                            <th>Project Name</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>";
+                foreach ($projects as $project) {
+                    echo "
+                        <tr>
+                            <td>{$project['name']}</td>
+                            <td>{$project['date_start']}</td>
+                            <td>{$project['date_end']}</td>
+                            <td>{$project['description']}</td>
+                            <td>";
+                    echo ($project['status'] === 0) ? '<p  class=active>● Active</p>' : '<p class=done>✔ Done</p></td>';
+                    echo "<td class='actions'><a href='./modifyProject.php?projectId=" . $project['id'] . "'>Modify</a> <a href='./deleteProject.php?deleteOne=" . $project['id'] . "'>Delete</a></td>";
+                }
+
+                echo "</table><h4 class=sub-title id=myTeams>Teams</h4> <div class='fullPage'>
+                <table class='teamTable'>
+                    <tr>
+                        <th>Team Name</th>
+                        <th>Description</th>
+                        <th>Created At</th>
+                        <th>Project Name</th>
+                        <th>Action</th>
+                    </tr>";
+                $query1 = "SELECT * from teams WHERE scrumMaster IS NULL";
+                $stmt1 = $conn->prepare($query1);
+                $stmt1->execute();
+                $teams = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($teams as $team) {
+                    $query2 = "SELECT * from projects WHERE id = :id";
+                    $stmt2 = $conn->prepare($query2);
+                    $stmt2->bindParam(':id', $team['projectId'], PDO::PARAM_STR);
+
+                    $stmt2->execute();
+                    $teamP = $stmt2->fetch(PDO::FETCH_ASSOC);
+
+                    echo "
+                        <tr>
+                            <td>{$team['name']}</td>
+                            <td>{$team['description']}</td>
+                            <td>{$team['created_at']}</td>
+                            <td>{$teamP['name']}</td>
+                            <td><a href=# onclick='openSMPopup(" . $team["id"] . ")'>Set Scrum Master</a></td>
+                        </tr>";
+                }
             } else if ($user['role'] === 2) {
                 echo '<a href="#"><i class="fa-solid fa-plus"></i>Create Team</a>';
             } else {
-                if ($user['teamId'] === NULL) {
+
+                $query = "SELECT users.*, team_user.team_id AS teamId, teams.name AS team_name, teams.description AS team_description FROM users JOIN team_user ON users.id = team_user.user_id JOIN teams ON team_user.team_id = teams.id WHERE users.email = :email";
+
+                $stmt = $conn->prepare($query);
+                $stmt->bindParam(':email', $_SESSION['email'], PDO::PARAM_STR);
+                $stmt->execute();
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+
+                if (empty($user)) {
                     echo '<div class=fullPage><h4>No Teams <br>No Projects</h4></div>';
                 } else {
+                    echo "<h4 class=sub-title id=myTeams>Teams</h4> <div class='fullPage'>";
+                    echo "<table class='teamTable'>
+                    <tr>
+                        <th>Team Name</th>
+                        <th>Description</th>
+                        <th>Created At</th>
+                        <th>Project Name</th>
+                        <th>Scrum Master</th>
+                    </tr>";
+
                     $userId = $user['id'];
 
                     $queryUserTeam = "SELECT team_id FROM team_user WHERE user_id = :userId";
                     $stmtUserTeam = $conn->prepare($queryUserTeam);
                     $stmtUserTeam->bindParam(':userId', $userId, PDO::PARAM_INT);
                     $stmtUserTeam->execute();
-                    $userTeamId = $stmtUserTeam->fetchColumn();
+                    $userTeams = $stmtUserTeam->fetchAll(PDO::FETCH_ASSOC);
 
-                    if ($userTeamId) {
+                    foreach ($userTeams as $userTeam) {
+                        $teamId = $userTeam['team_id'];
+
                         $queryTeam = "SELECT * FROM teams WHERE id = :teamId";
                         $stmtTeam = $conn->prepare($queryTeam);
-                        $stmtTeam->bindParam(':teamId', $userTeamId, PDO::PARAM_INT);
+                        $stmtTeam->bindParam(':teamId', $teamId, PDO::PARAM_INT);
                         $stmtTeam->execute();
                         $team = $stmtTeam->fetch(PDO::FETCH_ASSOC);
 
-                        if ($team) {
-                            $teamProjectId = $team['project_id'];
-                            $queryProject = "SELECT * FROM projects WHERE id = :projectId";
-                            $stmtProject = $conn->prepare($queryProject);
-                            $stmtProject->bindParam(':projectId', $teamProjectId, PDO::PARAM_INT);
-                            $stmtProject->execute();
-                            $project = $stmtProject->fetch(PDO::FETCH_ASSOC);
+                        $teamProjectId = $team['projectId'];
+                        $queryProject = "SELECT * FROM projects WHERE id = :projectId";
+                        $stmtProject = $conn->prepare($queryProject);
+                        $stmtProject->bindParam(':projectId', $teamProjectId, PDO::PARAM_INT);
+                        $stmtProject->execute();
+                        $project = $stmtProject->fetch(PDO::FETCH_ASSOC);
 
-                            echo "<table border='1'>
-                                    <tr>
-                                        <th>Team Name</th>
-                                        <th>Description</th>
-                                        <th>Created At</th>
-                                        <th>Project Name</th>
-                                    </tr>
-                                    <tr>
-                                        <td>{$team['name']}</td>
-                                        <td>{$team['description']}</td>
-                                        <td>{$team['created_at']}</td>
-                                        <td><a href='#' class='projectName'>{$project['name']}</a></td>
-                                    </tr>
-                                </table>";
-                        } else {
-                            echo "<p>No team data found for the user.</p>";
-                        }
-                    } else {
-                        echo "<p>User is not associated with any team.</p>";
+                        $querySM = "SELECT * FROM users WHERE id = :smId";
+                        $stmtSM = $conn->prepare($querySM);
+                        $stmtSM->bindParam(':smId', $team['scrumMaster'], PDO::PARAM_INT);
+                        $stmtSM->execute();
+                        $sm = $stmtSM->fetch(PDO::FETCH_ASSOC);
+
+                        echo "
+                        <tr>
+                            <td>{$team['name']}</td>
+                            <td>{$team['description']}</td>
+                            <td>{$team['created_at']}</td>
+                            <td>{$project['name']}</td>
+                            <td>{$sm['fname']} {$sm['lname']}</td>
+                        </tr>";
                     }
+
+                    echo "</table>
+                    <h4 class=sub-title id=myProjects>Projects</h4>
+                    <table class='teamTable'>
+                    <tr>
+                        <th>Project Name</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Product Owner</th>
+                    </tr>";
+                    $query = "SELECT projects.*
+                        FROM users
+                        JOIN team_user ON users.id = team_user.user_id
+                        JOIN teams ON team_user.team_id = teams.id
+                        JOIN projects ON teams.projectId = projects.id
+                        WHERE users.id = :userId";
+
+                    $stmt = $conn->prepare($query);
+                    $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
+                    $stmt->execute();
+
+                    $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    foreach ($projects as $project) {
+                        echo "
+                        <tr>
+                            <td>{$project['name']}</td>
+                            <td>{$project['date_start']}</td>
+                            <td>{$project['date_end']}</td>
+                            <td>{$project['description']}</td>
+                            <td>";
+                        echo ($project['status'] === 0) ? '<p  class=active>● Active</p>' : '<p class=done>✔ Done</p></td>';
+                        $queryPO = "SELECT * FROM users WHERE id = :poId";
+                        $stmtPO = $conn->prepare($queryPO);
+                        $stmtPO->bindParam(':poId', $project['productOwner'], PDO::PARAM_INT);
+                        $stmtPO->execute();
+                        $po = $stmtPO->fetch(PDO::FETCH_ASSOC);
+
+                        echo "
+                            <td>{$po['fname']} {$po['lname']}</td>
+                        </tr>";
+                    }
+                    echo "</div>";
                 }
             }
             ?>
@@ -477,6 +726,49 @@ include "../SQL/connect.php";
                 </div>
             </div>
         </div>
+        <div id="SMpopup" class="popup">
+            <div class="popup-content">
+                <div class="popup-header">
+                    <h2>Set Scrum Master</h2>
+                    <span class="close" onclick="closeSMPopup()">&times;</span>
+                </div>
+                <div class="popup-body">
+                    <form action="" method="post">
+                        <label for="teamId">Team ID:</label>
+                        <input type="text" id="teamId" name="teamId" required> <br>
+                        <label for="newSM">New Scrum Master:</label>
+                        <select name="newSM" id="newSM" required>
+                            <option value="" hidden>Select Scrum Master</option>
+                            <?php
+                            $query = "SELECT * FROM users WHERE role = 2";
+                            $stmt = $conn->prepare($query);
+                            $stmt->execute();
+
+                            $sms = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                            foreach ($sms as $sm) {
+                                echo "<option value={$sm['id']}>{$sm['fname']} {$sm['lname']}</option>";
+                            }
+                            ?>
+                        </select>
+                        <div class="popup-footer">
+                            <button type="submit" class="btn btn-primary" name="setSM">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <?php
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    $teamId = $_POST['teamId'];
+                    $newSM = $_POST['newSM'];
+                    $stmt = $conn->prepare("UPDATE teams SET scrumMaster = :newSM WHERE id = :teamId");
+                    $stmt->bindParam(':newSM', $newSM, PDO::PARAM_INT);
+                    $stmt->bindParam(':teamId', $teamId, PDO::PARAM_INT);
+                    $stmt->execute();
+                    header('Location: dashboard.php?success=true');
+                    exit();
+                }
+            ?>
+        </div>
     </main>
 
     <script>
@@ -487,6 +779,24 @@ include "../SQL/connect.php";
 
         function closePopup() {
             document.getElementById('popup').style.display = 'none';
+        }
+
+        function openMyPopup() {
+            document.getElementById('myPopup').style.display = 'flex';
+        }
+
+        function closeMyPopup() {
+            document.getElementById('myPopup').style.display = 'none';
+        }
+
+        function openSMPopup(teamId) {
+            document.getElementById('teamId').value = teamId;
+
+            document.getElementById('SMpopup').style.display = 'flex';
+        }
+
+        function closeSMPopup() {
+            document.getElementById('SMpopup').style.display = 'none';
         }
     </script>
 
